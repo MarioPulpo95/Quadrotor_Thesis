@@ -104,6 +104,7 @@ class QuadrotorEnv(gym.Env):
         self.compute_distance_to_target()
         # calcolo la distanza tra la posizione del cdm del drone e la traiettoria 
         self.compute_distance_to_traj() 
+        rospy.loginfo('Distanza dal target:{} Distanza dalla traiettoria:{}'.format(self.distance_to_waypoint, self.distance_to_line))
         # la ricompensa sarà meno negativa quanto più si avvicina il drone al target e alla traiettoria
         self.reward = - self.distance_to_waypoint - self.distance_to_line
         # controllo se la distanza tra il drone e la traiettoria è minore della soglia 
@@ -149,6 +150,7 @@ class QuadrotorEnv(gym.Env):
             return np.linalg.norm(drone_position-self.current_waypoint)
         drone_vector = drone_position - self.current_waypoint
         waypoints_vector = self.next_waypoint - self.current_waypoint
+        # unit vector in direzione di weypoint_vectori,per calcolare la proiezione di drone_vector sulla traiettoria 
         w_vec_unit = waypoints_vector/waypoints_length
         # se la proiezione del cdm del drone si trova all'esterno del segmento che unisce i due waypoints 
         # ritorno la distanza dal waypoints più vicino
@@ -158,9 +160,10 @@ class QuadrotorEnv(gym.Env):
         elif t > 1:
             closest_point = self.next_waypoint
         else:
+            # proeizione è un vettore dal primo endpoint della traiettoria al punto più vicino sulla traittoria al cdm del drone
             projection = np.dot(drone_vector, w_vec_unit) * w_vec_unit
             closest_point = self.current_waypoint + projection
-        # Calculate the distance from the point to the line of the segment
+        # la distanza tra il cdm del drone e il punto più vicino sulla traiettoria
         self.distance_to_line = np.linalg.norm(drone_position - closest_point)
          
     def get_observation(self):
